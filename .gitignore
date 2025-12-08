@@ -1,0 +1,12 @@
+# Directorios generados automáticamente por Composer
+/vendor/
+
+# Archivos de configuración de PHPUnit
+/phpunit.xml
+
+# Archivos específicos de Composer
+/composer.lock
+
+# Archivos temporales del IDE (VS Code, etc.)
+.vscode/
+*.log
