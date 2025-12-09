@@ -1,144 +1,234 @@
 <?php
+namespace Tests;
+
 use PHPUnit\Framework\TestCase;
-require_once __DIR__ . '/../ValidadorNombre.php';
+use App\Validador;
 
 class ValidadorNombreCaso3Test extends TestCase
 {
-    private ValidadorNombre $validador;
+    private Validador $validador;
 
     protected function setUp(): void
     {
-        // configuración base para las pruebas
-        $this->validador = new ValidadorNombre([
-            'min_length' => 3,
-            'max_length' => 20,
-            'allow_hyphen' => true,
-            'allow_unicode' => false,
-            'max_digits' => 4,
-            'max_repeated_chars' => 3,
-            'banned' => ['root', 'admin', 'test'],
-            'no_start_with_digit' => true,
-            'no_end_with_separator' => true,
-        ]);
+        $this->validador = new Validador();
     }
 
-    /** -----------------------------------------
-     *  PRUEBAS DE LONGITUD
-     * ----------------------------------------- */
+    // =========================================================================
+    // ESCENARIOS DE ÉXITO (APROBADO)
+    // =========================================================================
 
-    public function testNombreMuyCorto()
+    /**
+     * CU3-01: Caso Base - Funcionalidad principal.
+     * Nombre válido que cumple todas las reglas.
+     */
+    public function testNombreCumpleTodosRequisitos()
     {
-        $errores = $this->validador->validarConErrores("ab");
-        $this->assertContains("El nombre debe tener al menos 3 caracteres.", $errores);
-    }
-
-    public function testNombreMuyLargo()
-    {
-        $errores = $this->validador->validarConErrores("abcdefghijklmnopqrstu");
-        $this->assertContains("El nombre no puede tener más de 20 caracteres.", $errores);
-    }
-
-    /** -----------------------------------------
-     *  PRUEBAS DE CARACTERES PERMITIDOS
-     * ----------------------------------------- */
-
-    public function testNombreConEspacios()
-    {
-        $errores = $this->validador->validarConErrores("juan perez");
-        $this->assertContains("El nombre no puede contener espacios.", $errores);
-    }
-
-    public function testCaracteresInvalidos()
-    {
-        $errores = $this->validador->validarConErrores("juan$%");
-        $this->assertContains(
-            "El nombre contiene caracteres inválidos. Solo se permiten letras, números y los separadores configurados.",
-            $errores
+        // Dato de Prueba: juan123 (5-15 caracteres, solo letras y números)
+        $username = "juan123";
+        
+        // Resultado Esperado: APROBADO
+        $this->assertTrue(
+            $this->validador->validarUsername($username), 
+            "CU3-01 Falló: El nombre DEBERÍA ser válido al cumplir todas las reglas."
         );
     }
 
-    /** -----------------------------------------
-     *  PRUEBA: NO INICIAR CON NÚMERO
-     * ----------------------------------------- */
-
-    public function testNoDebeIniciarConNumero()
+    /**
+     * CU3-02: Valor Límite - Longitud mínima exacta (5 caracteres).
+     */
+    public function testNombrePasaEnLimiteMinimo()
     {
-        $errores = $this->validador->validarConErrores("1juan");
-        $this->assertContains("El nombre no puede comenzar con un número.", $errores);
+        // Dato de Prueba: abcde (exactamente 5 caracteres)
+        $username = "abcde";
+        
+        // Resultado Esperado: APROBADO
+        $this->assertTrue(
+            $this->validador->validarUsername($username), 
+            "CU3-02 Falló: El nombre de 5 caracteres DEBERÍA ser válido."
+        );
     }
 
-    /** -----------------------------------------
-     *  PRUEBA: NO TERMINAR CON SEPARADOR
-     * ----------------------------------------- */
-
-    public function testNoDebeTerminarConSeparador()
+    /**
+     * CU3-03: Valor Límite - Longitud máxima exacta (15 caracteres).
+     */
+    public function testNombrePasaEnLimiteMaximo()
     {
-        $errores = $this->validador->validarConErrores("juan_");
-        $this->assertContains("El nombre no puede terminar con un carácter separador.", $errores);
+        // Dato de Prueba: abcdefghijklmno (exactamente 15 caracteres)
+        $username = "abcdefghijklmno";
+        
+        // Resultado Esperado: APROBADO
+        $this->assertTrue(
+            $this->validador->validarUsername($username), 
+            "CU3-03 Falló: El nombre de 15 caracteres DEBERÍA ser válido."
+        );
     }
 
-    /** -----------------------------------------
-     *  PRUEBA: NO SEPARADORES CONSECUTIVOS
-     * ----------------------------------------- */
-
-    public function testSeparadoresConsecutivos()
+    /**
+     * CU3-04: Caso Especial - Solo letras.
+     */
+    public function testNombreSoloLetras()
     {
-        $errores = $this->validador->validarConErrores("juan__perez");
-        $this->assertContains("El nombre no puede contener '__' consecutivos.", $errores);
+        // Dato de Prueba: usuario (solo letras, dentro del rango)
+        $username = "usuario";
+        
+        // Resultado Esperado: APROBADO
+        $this->assertTrue(
+            $this->validador->validarUsername($username), 
+            "CU3-04 Falló: El nombre con solo letras DEBERÍA ser válido."
+        );
     }
 
-    /** -----------------------------------------
-     *  PRUEBA: LIMITE DE DIGITOS
-     * ----------------------------------------- */
-
-    public function testExcesoDeDigitos()
+    /**
+     * CU3-05: Caso Especial - Solo números (dentro del rango permitido).
+     */
+    public function testNombreSoloNumeros()
     {
-        $errores = $this->validador->validarConErrores("user12345");
-        $this->assertContains("El nombre no puede contener más de 4 dígitos.", $errores);
+        // Dato de Prueba: 12345 (exactamente 5 caracteres, solo números)
+        $username = "12345";
+        
+        // Resultado Esperado: APROBADO
+        $this->assertTrue(
+            $this->validador->validarUsername($username), 
+            "CU3-05 Falló: El nombre con solo números DEBERÍA ser válido (si cumple longitud)."
+        );
     }
 
-    /** -----------------------------------------
-     *  PRUEBA: CARACTERES REPETIDOS
-     * ----------------------------------------- */
-
-    public function testCaracteresRepetidos()
+    /**
+     * CU3-06: Caso Especial - Mezcla de mayúsculas y minúsculas.
+     */
+    public function testNombreConMayusculasMinusculas()
     {
-        $errores = $this->validador->validarConErrores("jaaaan");
-        $this->assertContains("El nombre no puede contener el mismo carácter repetido más de 3 veces seguidas.", $errores);
+        // Dato de Prueba: Usuario123
+        $username = "Usuario123";
+        
+        // Resultado Esperado: APROBADO
+        $this->assertTrue(
+            $this->validador->validarUsername($username), 
+            "CU3-06 Falló: El nombre con mayúsculas y minúsculas DEBERÍA ser válido."
+        );
     }
 
-    /** -----------------------------------------
-     *  PRUEBA: PALABRAS PROHIBIDAS
-     * ----------------------------------------- */
+    // =========================================================================
+    // ESCENARIOS DE FRACASO (NO APROBADO)
+    // =========================================================================
 
-    public function testPalabrasProhibidas()
+    /**
+     * CU3-07: Valor Límite - Longitud (Justo debajo del límite: 4 caracteres).
+     */
+    public function testNombreFallaPorLongitudCorta()
     {
-        $errores = $this->validador->validarConErrores("myadminuser");
-        $this->assertContains("El nombre contiene una palabra prohibida: 'admin'.", $errores);
+        // Dato de Prueba: abcd (4 caracteres)
+        $username = "abcd";
+        
+        // Resultado Esperado: NO APROBADO
+        $this->assertFalse(
+            $this->validador->validarUsername($username), 
+            "CU3-07 Falló: El nombre de 4 caracteres DEBERÍA ser inválido."
+        );
     }
 
-    /** -----------------------------------------
-     *  PRUEBA: UNICIDAD (Callback)
-     * ----------------------------------------- */
-
-    public function testNombreNoDisponible()
+    /**
+     * CU3-08: Valor Límite - Longitud (Justo encima del límite: 16 caracteres).
+     */
+    public function testNombreFallaPorLongitudLarga()
     {
-        $validador = new ValidadorNombre([
-            'uniqueness_callback' => function($nombre) {
-                return false; // simula que el nombre ya existe
-            }
-        ]);
-
-        $errores = $validador->validarConErrores("usuario");
-        $this->assertContains("El nombre ya está en uso.", $errores);
+        // Dato de Prueba: abcdefghijklmnop (16 caracteres)
+        $username = "abcdefghijklmnop";
+        
+        // Resultado Esperado: NO APROBADO
+        $this->assertFalse(
+            $this->validador->validarUsername($username), 
+            "CU3-08 Falló: El nombre de 16 caracteres DEBERÍA ser inválido."
+        );
     }
 
-    /** -----------------------------------------
-     *  PRUEBA DE NOMBRE VÁLIDO
-     * ----------------------------------------- */
-
-    public function testNombreValido()
+    /**
+     * CU3-09: Caracteres Inválidos - Guión bajo.
+     */
+    public function testNombreFallaPorCaracteresInvalidosGuion()
     {
-        $this->assertTrue($this->validador->validar("juan_perez123"));
+        // Dato de Prueba: juan_perez (contiene guión bajo)
+        $username = "juan_perez";
+        
+        // Resultado Esperado: NO APROBADO
+        $this->assertFalse(
+            $this->validador->validarUsername($username), 
+            "CU3-09 Falló: El nombre con guión bajo DEBERÍA ser inválido."
+        );
+    }
+
+    /**
+     * CU3-10: Caracteres Inválidos - Espacios.
+     */
+    public function testNombreFallaPorCaracteresInvalidosEspacio()
+    {
+        // Dato de Prueba: juan perez (contiene espacio)
+        $username = "juan perez";
+        
+        // Resultado Esperado: NO APROBADO
+        $this->assertFalse(
+            $this->validador->validarUsername($username), 
+            "CU3-10 Falló: El nombre con espacios DEBERÍA ser inválido."
+        );
+    }
+
+    /**
+     * CU3-11: Caracteres Inválidos - Símbolos especiales.
+     */
+    public function testNombreFallaPorCaracteresInvalidosSimbolos()
+    {
+        // Dato de Prueba: juan@correo (contiene @)
+        $username = "juan@correo";
+        
+        // Resultado Esperado: NO APROBADO
+        $this->assertFalse(
+            $this->validador->validarUsername($username), 
+            "CU3-11 Falló: El nombre con símbolos especiales DEBERÍA ser inválido."
+        );
+    }
+
+    /**
+     * CU3-12: Caracteres Inválidos - Carácter Unicode.
+     */
+    public function testNombreFallaPorCaracteresInvalidosUnicode()
+    {
+        // Dato de Prueba: juán123 (contiene acento)
+        $username = "juán123";
+        
+        // Resultado Esperado: NO APROBADO
+        $this->assertFalse(
+            $this->validador->validarUsername($username), 
+            "CU3-12 Falló: El nombre con caracteres Unicode DEBERÍA ser inválido."
+        );
+    }
+
+    /**
+     * CU3-13: Caso Negativo - Cadena Vacía.
+     */
+    public function testNombreFallaConCadenaVacia()
+    {
+        // Dato de Prueba: ""
+        $username = "";
+        
+        // Resultado Esperado: NO APROBADO
+        $this->assertFalse(
+            $this->validador->validarUsername($username), 
+            "CU3-13 Falló: La cadena vacía DEBERÍA ser inválida."
+        );
+    }
+
+    /**
+     * CU3-14: Caso Especial - Solo un carácter.
+     */
+    public function testNombreFallaConUnSoloCaracter()
+    {
+        // Dato de Prueba: a
+        $username = "a";
+        
+        // Resultado Esperado: NO APROBADO
+        $this->assertFalse(
+            $this->validador->validarUsername($username), 
+            "CU3-14 Falló: El nombre con un solo carácter DEBERÍA ser inválido."
+        );
     }
 }
